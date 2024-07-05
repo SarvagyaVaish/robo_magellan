@@ -1,0 +1,12 @@
+click
+fastapi
+folium
+numpy
+pandas
+pint
+pyserial
+pyzmq
+scipy
+tabulate
+utm
+websockets
