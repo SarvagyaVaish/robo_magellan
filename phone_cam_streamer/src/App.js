@@ -5,7 +5,6 @@ import "@tensorflow/tfjs-backend-webgl"; // set backend to webgl
 
 import { detectVideo } from "./detect";
 import { Webcam } from "./webcam";
-import "./App.css";
 
 function App() {
   // model related variables
