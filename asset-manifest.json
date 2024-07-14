@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/robo_magellan/static/css/main.859a7a53.css",
-    "main.js": "/robo_magellan/static/js/main.e635a236.js",
+    "main.js": "/robo_magellan/static/js/main.2205f736.js",
     "static/js/453.0b3dd17d.chunk.js": "/robo_magellan/static/js/453.0b3dd17d.chunk.js",
     "index.html": "/robo_magellan/index.html",
     "main.859a7a53.css.map": "/robo_magellan/static/css/main.859a7a53.css.map",
-    "main.e635a236.js.map": "/robo_magellan/static/js/main.e635a236.js.map",
+    "main.2205f736.js.map": "/robo_magellan/static/js/main.2205f736.js.map",
     "453.0b3dd17d.chunk.js.map": "/robo_magellan/static/js/453.0b3dd17d.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.859a7a53.css",
-    "static/js/main.e635a236.js"
+    "static/js/main.2205f736.js"
   ]
 }
