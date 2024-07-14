@@ -12,7 +12,7 @@ function ControlCenter() {
         {/* Links */}
         <div className="grid grid-cols-1 m-2 space-y-2 text-lg ">
           <a
-            href="/"
+            href="/robo_magellan"
             className="bg-gray-300 text-black font-bold p-4 rounded text-center"
           >
             Home

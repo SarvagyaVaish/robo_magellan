@@ -7,6 +7,9 @@ import { detectVideo } from "./detect";
 import { Webcam } from "./webcam";
 
 function ConeDetector() {
+  const fullUrl = window.location.href;
+  const homeUrl = fullUrl.split("?")[0];
+
   // model related variables
   const modelName = "cones_yolov8s";
   const [loading, setLoading] = useState({ loading: true, progress: 0 });
@@ -26,7 +29,7 @@ function ConeDetector() {
     tf.ready().then(async () => {
       // load model
       const yolov8 = await tf.loadGraphModel(
-        `${window.location.href}/${modelName}/model.json`,
+        `${homeUrl}/${modelName}/model.json`,
         {
           onProgress: (fractions) => {
             setLoading({ loading: true, progress: fractions });
@@ -48,14 +51,14 @@ function ConeDetector() {
       // cleanup memory
       tf.dispose([warmupResults, dummyInput]);
     });
-  }, []);
+  }, [homeUrl]);
 
-  // when model is loaded call start camera
-  useEffect(() => {
-    if (model.net) {
-      // webcam.openNormalCamera(cameraRef.current, setStreaming);
-    }
-  }, [model]);
+  // // when model is loaded call start camera
+  // useEffect(() => {
+  //   if (model.net) {
+  //     webcam.openNormalCamera(cameraRef.current, setStreaming);
+  //   }
+  // }, [model]);
 
   return (
     <div className="flex justify-center">
