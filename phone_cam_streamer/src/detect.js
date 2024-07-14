@@ -92,6 +92,34 @@ export const detect = async (source, model, canvasRef, callback = () => {}) => {
   const scores_data = scores.gather(nms, 0).dataSync(); // indexing scores by nms index
   const classes_data = classes.gather(nms, 0).dataSync(); // indexing classes by nms index
 
+  // create a list of detections to send to the server
+  const detectionList = [];
+  for (let i = 0; i < scores_data.length; ++i) {
+    let [y1, x1, y2, x2] = boxes_data.slice(i * 4, (i + 1) * 4);
+    x1 *= xRatio;
+    x2 *= xRatio;
+    y1 *= yRatio;
+    y2 *= yRatio;
+    let xcenter = (x1 + x2) / 2;
+    let ycenter = (y1 + y2) / 2;
+    let xnomalized = xcenter / modelWidth;
+    let ynomalized = ycenter / modelHeight;
+
+    detectionList.push({
+      x: xnomalized,
+      y: ynomalized,
+      width: x2 - x1,
+      height: y2 - y1,
+      score: scores_data[i],
+      class: classes_data[i],
+    });
+  }
+
+  // send detections to the server
+  if (detectionList.length > 0) {
+    sendConeDetections(detectionList);
+  }
+
   renderBoxes(canvasRef, boxes_data, scores_data, classes_data, [
     xRatio,
     yRatio,
