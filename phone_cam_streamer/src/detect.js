@@ -1,5 +1,6 @@
 import * as tf from "@tensorflow/tfjs";
 import { renderBoxes } from "./renderBox";
+import { sendConeDetections } from "./coneService";
 import labels from "./labels.json";
 
 const numClass = labels.length;
