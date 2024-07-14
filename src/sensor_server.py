@@ -104,8 +104,23 @@ async def sensor_data(request: Request):
     return {"status": "OK"}
 
 
+@app.post("/cone_detections")
+async def cone_detections(request: Request):
+    data_raw = await request.body()
+    print(f"Raw data received on /server_data: {data_raw}")
+
+    return {"status": "OK"}
+
+
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-    uvicorn.run("__main__:app", host="survy-mac.tail49268.ts.net", port=8000, reload=True)
+    uvicorn.run(
+        "__main__:app",
+        host="survy-mac.tail49268.ts.net",
+        port=8000,
+        reload=True,
+        ssl_certfile="/Users/survy/survy-mac.tail49268.ts.net.crt",
+        ssl_keyfile="/Users/survy/survy-mac.tail49268.ts.net.key",
+    )
