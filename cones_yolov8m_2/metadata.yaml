@@ -1,0 +1,14 @@
+description: Ultralytics cones_YOLOv8m_2 model trained on /content/datasets/Cones-for-Robomagellan-3/data.yaml
+author: Ultralytics
+date: '2024-07-17T21:51:29.804295'
+version: 8.2.50
+license: AGPL-3.0 License (https://ultralytics.com/license)
+docs: https://docs.ultralytics.com
+stride: 32
+task: detect
+batch: 1
+imgsz:
+- 640
+- 640
+names:
+  0: cone
