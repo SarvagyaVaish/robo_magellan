@@ -8,11 +8,14 @@ def get_logger(name, level="info"):
         logger.setLevel(logging.DEBUG)
     elif level == "info":
         logger.setLevel(logging.INFO)
-    elif level == "warning":
+    elif level == "warning" or level == "warn":
         logger.setLevel(logging.WARNING)
-    formatter = logging.Formatter(fmt="%(levelname)s: %(filename)s:%(lineno)d | %(message)s")
+
+    # INFO: mission.py:21 | Loaded 3 waypoints from mission.csv
+    formatter = logging.Formatter(fmt="{levelname:>7s}: {filename}:{lineno} | {message}", style="{")
     handler = logging.StreamHandler(stream=sys.stdout)
     handler.setFormatter(formatter)
     logger.addHandler(handler)
+    logger.propagate = False
 
     return logger
