@@ -8,5 +8,6 @@ pyserial
 pyzmq
 scipy
 tabulate
+transitions
 utm
 websockets
