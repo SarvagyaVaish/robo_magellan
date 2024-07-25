@@ -1,14 +1,20 @@
+#
+# Robot behaviors
+#
+
 import math
 from enum import Enum, auto
 
 from cmd_vel import CmdVel
 from custom_logger import get_logger
+from utils.gps import Pose
 
 
 logger = get_logger(__name__)
 
 
 class Behavior(Enum):
+    NAV_TO_POSE = auto()
     TURN_IN_PLACE = auto()
 
 
@@ -17,6 +23,47 @@ class BehaviorResult(Enum):
     RUNNING = auto()
     SUCCESS = auto()
     ERROR = auto()
+
+
+def normalize_th(angle):
+    return (angle + math.pi) % (2 * math.pi) - math.pi
+
+
+class NavToPose:
+    def __init__(self, target_pose: Pose, distance_threshold: float):
+        self.target_pose = target_pose
+        self.distance_threshold = distance_threshold
+
+    def step(self, current_pose: Pose) -> tuple[CmdVel, BehaviorResult]:
+        # Check if we have reached the goal
+        dist_to_goal = current_pose.dist(self.target_pose)
+        print(f"Dist to goal: {dist_to_goal}")
+
+        if dist_to_goal < self.distance_threshold:
+            print("Goal reached")
+            return CmdVel(0.0, 0.0), BehaviorResult.SUCCESS
+
+        # Make progress towards goal
+        angle_to_goal = current_pose.angle(self.target_pose)
+        heading_error = angle_to_goal - current_pose.th
+        heading_error = normalize_th(heading_error)
+        print(f"Heading error: {math.degrees(heading_error)}")
+
+        # left_speed = 0.5 - 0.25 / (math.pi / 2) * heading_error
+        # right_speed = 0.5 + 0.25 / (math.pi / 2) * heading_error
+        # print(f"Left speed: {left_speed}, right speed: {right_speed}")
+
+        # Calculate angular velocity.
+        # When error is >= 90 deg, turn at the max rate of pi rad/sec
+        angular_vel = 2 * heading_error
+        angular_vel = min(max(angular_vel, -math.pi), math.pi)
+
+        # Calculate linear velocity.
+        # When error is >= 90 deg, stop. When error is 0, go at the max speed of 1 m/sec.
+        linear_vel = -2 / math.pi * abs(heading_error) + 1
+
+        cmd_vel = CmdVel(linear_vel, angular_vel)
+        return cmd_vel, BehaviorResult.RUNNING
 
 
 class TurnInPlace:
