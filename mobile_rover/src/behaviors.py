@@ -1,19 +1,24 @@
 #
 # Robot behaviors
 #
+# Each behavior has a .step() method
+# - it uses the current state of the robot to execute the behavior
+# - it outputs a cmd_vel and status
+#
 
-import math
 from enum import Enum, auto
+import math
 
 from cmd_vel import CmdVel
 from custom_logger import get_logger
+from geometry import normalize_th_pi
 from utils.gps import Pose
 
 
 logger = get_logger(__name__)
 
 
-class Behavior(Enum):
+class BehaviorType(Enum):
     NAV_TO_POSE = auto()
     TURN_IN_PLACE = auto()
 
@@ -25,10 +30,6 @@ class BehaviorResult(Enum):
     ERROR = auto()
 
 
-def normalize_th(angle):
-    return (angle + math.pi) % (2 * math.pi) - math.pi
-
-
 class NavToPose:
     def __init__(self, target_pose: Pose, distance_threshold: float):
         self.target_pose = target_pose
@@ -37,21 +38,17 @@ class NavToPose:
     def step(self, current_pose: Pose) -> tuple[CmdVel, BehaviorResult]:
         # Check if we have reached the goal
         dist_to_goal = current_pose.dist(self.target_pose)
-        print(f"Dist to goal: {dist_to_goal}")
+        logger.debug(f"Dist to goal: {dist_to_goal}")
 
         if dist_to_goal < self.distance_threshold:
-            print("Goal reached")
+            logger.debug("Goal reached")
             return CmdVel(0.0, 0.0), BehaviorResult.SUCCESS
 
         # Make progress towards goal
         angle_to_goal = current_pose.angle(self.target_pose)
         heading_error = angle_to_goal - current_pose.th
-        heading_error = normalize_th(heading_error)
-        print(f"Heading error: {math.degrees(heading_error)}")
-
-        # left_speed = 0.5 - 0.25 / (math.pi / 2) * heading_error
-        # right_speed = 0.5 + 0.25 / (math.pi / 2) * heading_error
-        # print(f"Left speed: {left_speed}, right speed: {right_speed}")
+        heading_error = normalize_th_pi(heading_error)
+        logger.debug(f"Heading error: {math.degrees(heading_error)}")
 
         # Calculate angular velocity.
         # When error is >= 90 deg, turn at the max rate of pi rad/sec
@@ -59,8 +56,11 @@ class NavToPose:
         angular_vel = min(max(angular_vel, -math.pi), math.pi)
 
         # Calculate linear velocity.
-        # When error is >= 90 deg, stop. When error is 0, go at the max speed of 1 m/sec.
-        linear_vel = -2 / math.pi * abs(heading_error) + 1
+        # When error is >= 90 deg, go slow. When error is 0, go at the max speed of 1 m/sec.
+        if abs(heading_error) >= math.pi / 2:
+            linear_vel = 0.1
+        else:
+            linear_vel = -2 / math.pi * abs(heading_error) + 1
 
         cmd_vel = CmdVel(linear_vel, angular_vel)
         return cmd_vel, BehaviorResult.RUNNING
@@ -77,7 +77,7 @@ class TurnInPlace:
 
         self.has_moved_enough = False
 
-    def step(self, current_th) -> tuple[CmdVel, bool]:
+    def step(self, current_th) -> tuple[CmdVel, BehaviorResult]:
         # Measure the change in angle from the starting angle, in the right hand coordinate system.
         logger.debug(
             "Starting th: {}, current th: {}, rotation_th: {}".format(

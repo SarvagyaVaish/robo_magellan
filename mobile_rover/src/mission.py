@@ -32,13 +32,13 @@ class Mission:
             elif waypoint.is_goal:
                 logger.info(f"Waypoint {i}: 🏁 {waypoint.gps.lat}, {waypoint.gps.lon}")
 
-    def get_current_waypoint(self):
+    def get_current_waypoint(self) -> GPSWaypoint:
         return self.waypoints[self.current_waypoint_idx]
 
     def go_to_next_waypoint(self):
         self.current_waypoint_idx += 1
 
-    def is_mission_complete(self):
+    def is_mission_complete(self) -> bool:
         return self.current_waypoint_idx >= len(self.waypoints)
 
     def visualize_mission(self, output_file="mission.html"):
@@ -86,3 +86,9 @@ class Mission:
         # Save the map to an HTML file
         m.save(output_file)
         print(f"Map saved to {output_file}")
+
+
+if __name__ == "__main__":
+    mission = Mission()
+    mission.load_from_file()
+    mission.visualize_mission()
