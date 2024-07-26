@@ -18,6 +18,6 @@ GPS
 - heading:
   - radians `[0, 2pi)`
   - 0 deg = north
-  - left-hand rule rotation
+  - increasing clockwise
   - to convert to right handed cartesian
     = `-1 * heading  +  pi / 2`
