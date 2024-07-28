@@ -21,3 +21,9 @@ GPS
   - increasing clockwise
   - to convert to right handed cartesian
     = `-1 * heading  +  pi / 2`
+
+To generate certs for https
+
+```
+/Applications/Tailscale.app/Contents/MacOS/Tailscale cert survy-mac.tail49268.ts.net
+```

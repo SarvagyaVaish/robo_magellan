@@ -14,6 +14,7 @@
 from contextlib import asynccontextmanager
 import json
 import math
+import os
 import signal
 import sys
 
@@ -21,6 +22,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
+from config_manager import get_sensor_service_address
 from custom_logger import get_logger
 from pub_sub import Publisher
 
@@ -33,17 +35,17 @@ logger = get_logger(__name__, "info")
 
 
 # Use the lifespan to start and close the GPS publisher.
-# This is needed for the uvicorn hot reloading functionality.
+# This closes the publisher socket when using the uvicorn hot reloading functionality.
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global gps_publisher
 
-    logger.info("Server lifespan start")
+    logger.debug("Server lifespan start")
     gps_publisher = Publisher()
 
     yield
 
-    logger.info("Server lifespan end")
+    logger.debug("Server lifespan end")
     gps_publisher.close()
 
 
@@ -116,11 +118,26 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
+    # Check if the cert and key files exist
+    tls_crt_path = os.path.join(os.path.expanduser("~"), "tailscale_tls.crt")
+    tls_key_path = os.path.join(os.path.expanduser("~"), "tailscale_tls.key")
+    if not os.path.exists(tls_crt_path):
+        raise FileNotFoundError(f"Certificate file not found at {tls_crt_path}")
+    if not os.path.exists(tls_key_path):
+        raise FileNotFoundError(f"Key file not found at {tls_key_path}")
+
+    # Get server config
+    host, port = get_sensor_service_address()
+
+    # Print Client settings
+    logger.info("Client Settings:")
+    logger.info(f"Set Client HTTP requests endpoint to: https://{host}:{port}/sensor_data")
+
     uvicorn.run(
         "__main__:app",
-        host="survy-mac.tail49268.ts.net",
-        port=8000,
+        host=host,
+        port=port,
         reload=True,
-        ssl_certfile="/Users/survy/survy-mac.tail49268.ts.net.crt",
-        ssl_keyfile="/Users/survy/survy-mac.tail49268.ts.net.key",
+        ssl_certfile=tls_crt_path,
+        ssl_keyfile=tls_key_path,
     )
