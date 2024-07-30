@@ -5,11 +5,11 @@ import time
 from custom_logger import get_logger
 
 
-logger = get_logger(__name__, "info")
+logger = get_logger(__name__)
 
 
 class Publisher:
-    def __init__(self, port=5050):
+    def __init__(self, port):
         self.address = f"tcp://*:{port}"
 
         self.context = zmq.Context()
@@ -38,14 +38,22 @@ class Publisher:
 
 
 class Subscriber:
-    def __init__(self, port=5050):
+    def __init__(self, port, timeout=-1):
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.SUB)
         self.socket.connect(f"tcp://localhost:{port}")
         self.socket.setsockopt_string(zmq.SUBSCRIBE, "")
 
+        if timeout > 0:
+            self.socket.setsockopt(zmq.RCVTIMEO, timeout)
+
     def receive_json(self):
-        return self.socket.recv_json()
+        try:
+            data = self.socket.recv_json()
+        except zmq.error.Again:
+            data = None
+
+        return data
 
     def write_to_logs(self, filename):
         # Create an empty file
@@ -58,3 +66,32 @@ class Subscriber:
 
             with open(filename, "a") as f:
                 f.write(json.dumps(gps_json) + "\n")
+
+
+PORT_GPS = 5050
+PORT_POSE = 5060
+PORT_CONE_DETECTIONS = 5070
+
+
+def get_publisher_gps():
+    return Publisher(port=PORT_GPS)
+
+
+def get_subscriber_gps():
+    return Subscriber(port=PORT_GPS)
+
+
+def get_publisher_pose():
+    return Publisher(port=PORT_POSE)
+
+
+def get_subscriber_pose():
+    return Subscriber(port=PORT_POSE)
+
+
+def get_publisher_cone_detections():
+    return Publisher(port=PORT_CONE_DETECTIONS)
+
+
+def get_subscriber_cone_detections():
+    return Subscriber(port=PORT_CONE_DETECTIONS, timeout=1)

@@ -132,10 +132,21 @@ class StateMachine:
     # SEARCHING_FOR_CONE
     #
 
+    def on_enter_SEARCHING_FOR_CONE(self):
+        logger.info(" ✅ SEARCHING_FOR_CONE")
+
+        self.robot.start_behavior(BehaviorType.SEARCH_FOR_CONE)
+
     def step_SEARCHING_FOR_CONE(self):
         logger.info(" ▶️  SEARCHING_FOR_CONE")
-        logger.info(" ⚡ CONE_FOUND")
-        self.CONE_FOUND()
+
+        behavior_result = self.robot.step()
+        if behavior_result == BehaviorResult.SUCCESS:
+            logger.info(" ⚡ CONE_FOUND")
+            self.CONE_FOUND()
+        elif behavior_result == BehaviorResult.ERROR:
+            logger.info(" ⚡ ERROR")
+            self.ERROR()
 
     #
     # APPROACHING_CONE

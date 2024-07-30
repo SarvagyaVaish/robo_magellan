@@ -1,7 +1,7 @@
 import math
 
 from custom_logger import get_logger
-from behaviors import BehaviorResult, BehaviorType, NavToPose
+from behaviors import BehaviorResult, BehaviorType, NavToPose, SearchForCone
 from utils.gps import GPSPose, Pose
 
 logger = get_logger(__name__)
@@ -22,6 +22,9 @@ class MobileRobot:
 
         elif behavior_type == BehaviorType.TURN_IN_PLACE:
             pass
+
+        elif behavior_type == BehaviorType.SEARCH_FOR_CONE:
+            self.behavior = SearchForCone()
 
         else:
             raise ValueError(f"Invalid behavior type: {behavior_type}")
