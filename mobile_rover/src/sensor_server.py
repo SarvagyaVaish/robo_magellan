@@ -24,7 +24,8 @@ import uvicorn
 
 from config_manager import get_sensor_service_address
 from custom_logger import get_logger
-from pub_sub import Publisher
+from pub_sub import get_publisher_gps
+from pub_sub import get_publisher_cone_detections
 
 
 def signal_handler(sig, frame):
@@ -38,15 +39,17 @@ logger = get_logger(__name__, "info")
 # This closes the publisher socket when using the uvicorn hot reloading functionality.
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global gps_publisher
+    global gps_publisher, cone_detections_publisher
 
     logger.debug("Server lifespan start")
-    gps_publisher = Publisher()
+    gps_publisher = get_publisher_gps()
+    cone_detections_publisher = get_publisher_cone_detections()
 
     yield
 
     logger.debug("Server lifespan end")
     gps_publisher.close()
+    cone_detections_publisher.close()
 
 
 app = FastAPI(lifespan=lifespan)
@@ -106,10 +109,41 @@ async def sensor_data(request: Request):
     return {"status": "OK"}
 
 
+cone_detections_publisher = None
+
+
 @app.post("/cone_detections")
 async def cone_detections(request: Request):
     data_raw = await request.body()
-    print(f"Raw data received on /server_data: {data_raw}")
+    logger.debug(f"Raw data received on /server_data: {data_raw}")
+
+    data_json = json.loads(data_raw.decode("utf-8"))
+    """
+    example_raw_data = {
+        "detections": [
+            {
+                "x": 0.5295924186706543,
+                "y": 0.42527180910110474,
+                "width": 0.10086383819580078,
+                "height": 0.1837218999862671,
+                "score": 0.9829293489456177,
+                "class": 0,
+            },
+        ]
+    }
+    """
+
+    # Iterate over detections and find the largest one by area of image
+    largest_detection = None
+    largest_detection_area = 0
+    for detection in data_json["detections"]:
+        detection_area = detection["width"] * detection["height"]
+        if detection_area > largest_detection_area:
+            largest_detection = detection
+            largest_detection_area = detection_area
+    logger.debug(f"Largest detection: {largest_detection}")
+
+    cone_detections_publisher.send_json(largest_detection)
 
     return {"status": "OK"}
 

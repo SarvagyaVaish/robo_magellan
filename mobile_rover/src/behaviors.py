@@ -12,6 +12,7 @@ import math
 from cmd_vel import CmdVel
 from custom_logger import get_logger
 from geometry import normalize_th_pi
+from pub_sub import get_subscriber_cone_detections
 from utils.gps import Pose
 
 
@@ -21,6 +22,7 @@ logger = get_logger(__name__)
 class BehaviorType(Enum):
     NAV_TO_POSE = auto()
     TURN_IN_PLACE = auto()
+    SEARCH_FOR_CONE = auto()
 
 
 class BehaviorResult(Enum):
@@ -70,28 +72,31 @@ class TurnInPlace:
     # TODO: Support turning in both directions.
     # TODO: Support timeout
 
-    def __init__(self, starting_th, rotation_th, speed_rpm):
-        self.starting_th = starting_th
+    def __init__(self, rotation_th, speed_rpm):
         self.rotation_th = rotation_th
         self.speed_rpm = speed_rpm
 
+        self.starting_th = None
         self.has_moved_enough = False
 
-    def step(self, current_th) -> tuple[CmdVel, BehaviorResult]:
+    def step(self, current_pose: Pose) -> tuple[CmdVel, BehaviorResult]:
+        if self.starting_th is None:
+            self.starting_th = current_pose.th
+
         # Measure the change in angle from the starting angle, in the right hand coordinate system.
         logger.debug(
             "Starting th: {}, current th: {}, rotation_th: {}".format(
                 math.degrees(self.starting_th),
-                math.degrees(current_th),
+                math.degrees(current_pose.th),
                 math.degrees(self.rotation_th),
             )
         )
 
-        if current_th >= self.starting_th:
-            delta_th = current_th - self.starting_th
+        if current_pose.th >= self.starting_th:
+            delta_th = current_pose.th - self.starting_th
         else:
             logger.debug("Current th is less than starting th. Adding 2pi to current th.")
-            delta_th = 2 * math.pi + current_th - self.starting_th
+            delta_th = 2 * math.pi + current_pose.th - self.starting_th
 
         # Check if it seems like we have moved a whole lot, but are actually within the sensor noise.
         if not self.has_moved_enough and delta_th > math.radians(270):
@@ -112,3 +117,27 @@ class TurnInPlace:
             logger.debug("Moved more than target rotation angle. Returning success.")
             cmd_vel = CmdVel()
             return cmd_vel, BehaviorResult.SUCCESS
+
+
+class SearchForCone:
+    def __init__(self):
+        self.turn_in_place = TurnInPlace(rotation_th=2 * math.pi, speed_rpm=4)
+        self.cone_detections_subscriber = get_subscriber_cone_detections()
+
+    def step(self, current_pose: Pose) -> tuple[CmdVel, BehaviorResult]:
+        data = self.cone_detections_subscriber.receive_json()
+
+        # If we found a cone, stop turning and return success
+        if data is not None:
+            logger.debug(f"Got cone detection: {data}")
+            return CmdVel(), BehaviorResult.SUCCESS
+
+        # Otherwise, continue to turn in place
+        cmd_vel, turn_result = self.turn_in_place.step(current_pose)
+
+        # If there is more turning to do, keep turning and return running
+        if turn_result == BehaviorResult.RUNNING:
+            return cmd_vel, BehaviorResult.RUNNING
+
+        # If no longer turning, return failure
+        return cmd_vel, BehaviorResult.ERROR

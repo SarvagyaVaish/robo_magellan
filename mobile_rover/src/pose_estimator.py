@@ -6,7 +6,8 @@ from scipy.spatial import distance
 import click
 import utm
 
-from pub_sub import Subscriber, Publisher
+from pub_sub import get_publisher_gps, get_subscriber_gps
+from pub_sub import get_publisher_pose
 
 
 def gps_to_pose(gps):
@@ -45,18 +46,18 @@ def main(write_logs, replay_logs, log_filename):
 
     if write_logs:
         print(f"Writing data to {log_filename}")
-        gps_subscriber = Subscriber()
+        gps_subscriber = get_subscriber_gps()
         gps_subscriber.write_to_logs(log_filename)
 
     elif replay_logs:
         print(f"Replaying data from {log_filename}")
-        gps_publisher = Publisher()
+        gps_publisher = get_publisher_gps()
         gps_publisher.read_from_logs(log_filename)
 
     else:
         print("Starting pose estimator")
-        gps_subscriber = Subscriber()
-        pose_publisher = Publisher(port=5060)
+        gps_subscriber = get_subscriber_gps()
+        pose_publisher = get_publisher_pose()
 
         heading_pose = None
         current_pose = None

@@ -4,7 +4,7 @@ from scipy.spatial import distance
 import click
 import utm
 
-from pub_sub import Subscriber, Publisher
+from pub_sub import get_subscriber_pose
 from motors import set_motor_speeds, stop_motors
 
 
@@ -60,7 +60,7 @@ def main(goal_num):
     goal_pose = gps_to_xy({"latitude": goal[0], "longitude": goal[1]})
 
     # Subscribe to pose and drive towards it
-    pose_subscriber = Subscriber(port=5060)
+    pose_subscriber = get_subscriber_pose()
     while True:
         print("------")
 
