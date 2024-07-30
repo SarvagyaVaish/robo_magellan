@@ -108,8 +108,8 @@ export const detect = async (source, model, canvasRef, callback = () => {}) => {
     detectionList.push({
       x: xnomalized,
       y: ynomalized,
-      width: x2 - x1,
-      height: y2 - y1,
+      width: (x2 - x1) / modelWidth,
+      height: (y2 - y1) / modelHeight,
       score: scores_data[i],
       class: classes_data[i],
     });
