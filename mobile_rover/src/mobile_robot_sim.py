@@ -1,16 +1,18 @@
 import math
 
-from custom_logger import get_logger
 from behaviors import BehaviorResult, BehaviorType, NavToPose, SearchForCone
+from custom_logger import get_logger
+from mobile_robot_base import MobileRobotBase
 from utils.gps import GPSPose, Pose
 
-logger = get_logger(__name__)
-dt = 0.1  # seconds
+
+logger = get_logger("mobile_robot_sim")
 
 
-class MobileRobot:
-    def __init__(self, x, y, th):
+class MobileRobotSim(MobileRobotBase):
+    def __init__(self, x, y, th, sim_dt=0.1):
         self.pose = Pose(x, y, th)
+        self.sim_dt = sim_dt
         self.behavior = None
         self.path = []  # type: list[Pose]
 
@@ -31,7 +33,7 @@ class MobileRobot:
 
     def step(self) -> BehaviorResult:
         cmd_vel, behavior_result = self.behavior.step(self.pose)
-        self.pose.update(cmd_vel, dt)
+        self.pose.update(cmd_vel, self.sim_dt)
 
         # Keep track of the path
         p = self.pose.copy()
