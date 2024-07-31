@@ -1,15 +1,19 @@
+"""
+A StateMachine that encapsulates the logic and orchestrates the Mission.
+
+- It takes in a Mobile Robot and a Mission file
+- It executes the Mission by executing the right Behavior on the Robot
+"""
+
 from enum import Enum, auto
 import logging
-import math
-from random import random
 
 from transitions import Machine
 
 from behaviors import BehaviorResult, BehaviorType
 from custom_logger import get_logger
 from mission import Mission
-from mobile_robot_sim import MobileRobot
-from utils.gps import GPSCoordinate
+from mobile_robot_base import MobileRobotBase
 
 
 # TODO: figure out how to enable state machine internal logger
@@ -42,9 +46,10 @@ class Transition(Enum):
 
 
 class StateMachine:
-    def __init__(self, robot):
+    def __init__(self, robot: MobileRobotBase, mission_filename: str):
         # The entity that the state machine will control
-        self.robot = robot  # type: MobileRobot
+        self.robot = robot
+        self.mission_filename = mission_filename
         self.mission = None  # type: Mission
 
         # Create the state machine
@@ -80,7 +85,7 @@ class StateMachine:
     def step_START(self):
         # Load the mission from a CSV file
         self.mission = Mission()
-        self.mission.load_from_file()
+        self.mission.load_from_file(filename=self.mission_filename)
 
         # Transition out of state
         logger.info(" ⚡ START_MISSION")
@@ -183,26 +188,3 @@ class StateMachine:
 
     def in_final_state(self):
         return self.machine.get_state(self.state).final
-
-
-if __name__ == "__main__":
-    # Set the robot's initial pose, facing north with jitter
-    j = random() / 10000.0
-    robot_init_gps = GPSCoordinate(37.57128 + j, -122.30064 + j)
-    robot_init_pose = robot_init_gps.to_pose()
-
-    # Create a mobile robot, facing north
-    mobile_robot = MobileRobot(robot_init_pose.x, robot_init_pose.y, math.pi / 2)
-
-    # Create a state machine to orchestrate the mission
-    state_machine = StateMachine(robot=mobile_robot)
-    step_count = 0
-
-    while not state_machine.in_final_state():
-        state_machine.step()
-
-        step_count += 1
-        # if step_count > 1000:
-        #     break
-
-    mobile_robot.visualize_path()

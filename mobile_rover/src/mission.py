@@ -10,7 +10,7 @@ class Mission:
         self.waypoints = []
         self.current_waypoint_idx = -1
 
-    def load_from_file(self, filename="mission.csv"):
+    def load_from_file(self, filename):
         # Reset
         self.waypoints = []
         self.current_waypoint_idx = -1
