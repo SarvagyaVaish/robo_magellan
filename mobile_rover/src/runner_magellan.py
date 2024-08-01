@@ -2,15 +2,26 @@
 Run the State Machine against the physical Magellan Mobile Robot.
 """
 
+import signal
+import sys
 import time
 
 from mobile_robot_magellan import MobileRobotMagellan
+from motors import stop_motors
 from state_machine import StateMachine
 
 
-rate = 2
+def signal_handler(sig, frame):
+    stop_motors()
+    sys.exit(0)
+
+
+rate = 5
 
 if __name__ == "__main__":
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+
     # Create a mobile robot
     mobile_robot = MobileRobotMagellan()
     mobile_robot.wait_for_pose()
