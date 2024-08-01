@@ -1,20 +1,40 @@
 import math
+import time
 
-from behaviors import BehaviorResult, BehaviorType, NavToPose, SearchForCone
+from behaviors import BehaviorResult, BehaviorType, NavToPose, SearchForCone, NoopBehavior
 from custom_logger import get_logger
 from mobile_robot_base import MobileRobotBase
+from motors import set_motor_speeds, stop_motors
+from pub_sub import get_subscriber_pose
 from utils.gps import GPSPose, Pose
 
 
-logger = get_logger("mobile_robot_sim")
+logger = get_logger("mobile_robot_magellan")
 
 
-class MobileRobotSim(MobileRobotBase):
-    def __init__(self, x, y, th, sim_dt=0.1):
-        self.pose = Pose(x, y, th)
-        self.sim_dt = sim_dt
+class MobileRobotMagellan(MobileRobotBase):
+    def __init__(self):
+        self.pose = None
         self.behavior = None
+
         self.path = []  # type: list[Pose]
+        self.pose_subscriber = get_subscriber_pose()
+
+    def wait_for_pose(self, timeout=10):
+        start_time = time.time()
+
+        while time.time() - start_time < timeout:
+            logger.info("Waiting for pose...")
+
+            pose_dict = self.pose_subscriber.receive_json()  # Ex: {"x": 0, "y": 0, "th": 0}
+            if pose_dict is not None:
+                self.pose = Pose(**pose_dict)
+                logger.info(f"Got pose: {self.pose}")
+                return
+            else:
+                time.sleep(0.5)
+
+        raise TimeoutError("Timed out waiting for pose")
 
     def start_behavior(self, behavior_type, **kwargs):
         if behavior_type == BehaviorType.NAV_TO_POSE:
@@ -23,17 +43,30 @@ class MobileRobotSim(MobileRobotBase):
             self.behavior = NavToPose(target_pose, distance_threshold)
 
         elif behavior_type == BehaviorType.TURN_IN_PLACE:
-            pass
+            self.behavior = NoopBehavior()
 
         elif behavior_type == BehaviorType.SEARCH_FOR_CONE:
-            self.behavior = SearchForCone()
+            self.behavior = NoopBehavior()
 
         else:
             raise ValueError(f"Invalid behavior type: {behavior_type}")
 
     def step(self) -> BehaviorResult:
+        pose_dict = self.pose_subscriber.receive_json()
+        if pose_dict is not None:
+            self.pose = Pose(**pose_dict)
+        else:
+            logger.info("Using stale pose")
+
         cmd_vel, behavior_result = self.behavior.step(self.pose)
-        self.pose.update(cmd_vel, self.sim_dt)
+        linear_vel = cmd_vel.linear_vel
+        angular_vel = cmd_vel.angular_vel
+
+        # convert linear and angular velocities to left and right wheel speeds
+        left_speed = linear_vel - angular_vel * 0.5
+        right_speed = linear_vel + angular_vel * 0.5
+
+        # set_motor_speeds(left_speed, right_speed)
 
         # Keep track of the path
         self.path.append(self.pose.copy())

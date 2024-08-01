@@ -1,6 +1,7 @@
 import copy
 import math
 import json
+import time
 
 from scipy.spatial import distance
 import click
@@ -63,11 +64,16 @@ def main(write_logs, replay_logs, log_filename):
         current_pose = None
         prev_pose = None
 
+        rate = 5
+
         while True:
+            time.sleep(1 / rate)
             prev_pose = copy.deepcopy(current_pose)
 
             # Get current pose from GPS
             gps_json = gps_subscriber.receive_json()
+            if gps_json is None:
+                continue
             current_pose = gps_to_pose(gps_json)
 
             # # Initialize pose estimator

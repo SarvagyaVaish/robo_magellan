@@ -44,6 +44,8 @@ class Subscriber:
         self.socket.connect(f"tcp://localhost:{port}")
         self.socket.setsockopt_string(zmq.SUBSCRIBE, "")
 
+        self.none_received_count = 0
+
         if timeout > 0:
             self.socket.setsockopt(zmq.RCVTIMEO, timeout)
 
@@ -52,6 +54,13 @@ class Subscriber:
             data = self.socket.recv_json()
         except zmq.error.Again:
             data = None
+
+        if data is None:
+            self.none_received_count += 1
+            if self.none_received_count > 10:
+                logger.warning(f"No data received from subscriber after {self.none_received_count} attempts")
+        else:
+            self.none_received_count = 0
 
         return data
 
