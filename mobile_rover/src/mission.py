@@ -35,6 +35,9 @@ class Mission:
     def get_current_waypoint(self) -> GPSWaypoint:
         return self.waypoints[self.current_waypoint_idx]
 
+    def get_current_waypoint_idx(self) -> int:
+        return self.current_waypoint_idx
+
     def go_to_next_waypoint(self):
         self.current_waypoint_idx += 1
 

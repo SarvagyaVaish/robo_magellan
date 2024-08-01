@@ -111,7 +111,8 @@ class StateMachine:
     #
 
     def on_enter_NAVIGATING_TO_WAYPOINT(self):
-        logger.info(" ✅ NAVIGATING_TO_WAYPOINT")
+        target_waypoint_idx = self.mission.get_current_waypoint_idx()
+        logger.info(f" ✅ NAVIGATING_TO_WAYPOINT ({target_waypoint_idx})")
 
         target_waypoint = self.mission.get_current_waypoint()
         target_pose = target_waypoint.gps.to_pose()

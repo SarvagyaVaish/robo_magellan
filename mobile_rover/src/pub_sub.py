@@ -78,7 +78,7 @@ def get_publisher_gps():
 
 
 def get_subscriber_gps():
-    return Subscriber(port=PORT_GPS)
+    return Subscriber(port=PORT_GPS, timeout=1)
 
 
 def get_publisher_pose():
@@ -86,7 +86,7 @@ def get_publisher_pose():
 
 
 def get_subscriber_pose():
-    return Subscriber(port=PORT_POSE)
+    return Subscriber(port=PORT_POSE, timeout=1)
 
 
 def get_publisher_cone_detections():
