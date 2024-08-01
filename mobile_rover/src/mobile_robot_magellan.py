@@ -66,7 +66,7 @@ class MobileRobotMagellan(MobileRobotBase):
         left_speed = linear_vel - angular_vel * 0.5
         right_speed = linear_vel + angular_vel * 0.5
 
-        # set_motor_speeds(left_speed, right_speed)
+        set_motor_speeds(left_speed, right_speed)
 
         # Keep track of the path
         self.path.append(self.pose.copy())
