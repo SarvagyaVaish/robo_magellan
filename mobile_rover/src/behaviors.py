@@ -32,6 +32,18 @@ class BehaviorResult(Enum):
     ERROR = auto()
 
 
+class NoopBehavior:
+    def __init__(self, steps_to_success=3) -> None:
+        self.steps_to_success = steps_to_success
+
+    def step(self, current_pose: Pose) -> tuple[CmdVel, BehaviorResult]:
+        self.steps_to_success -= 1
+        if self.steps_to_success > 0:
+            return CmdVel(), BehaviorResult.RUNNING
+        else:
+            return CmdVel(), BehaviorResult.SUCCESS
+
+
 class NavToPose:
     def __init__(self, target_pose: Pose, distance_threshold: float):
         self.target_pose = target_pose
