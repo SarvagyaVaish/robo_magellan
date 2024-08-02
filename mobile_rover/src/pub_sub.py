@@ -41,13 +41,17 @@ class Subscriber:
     def __init__(self, port, timeout=-1):
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.SUB)
-        self.socket.connect(f"tcp://localhost:{port}")
+
+        # Set options
+        self.socket.setsockopt(zmq.CONFLATE, 1)  # set CONFLATE for "last message only" mode.
         self.socket.setsockopt_string(zmq.SUBSCRIBE, "")
-
-        self.none_received_count = 0
-
         if timeout > 0:
             self.socket.setsockopt(zmq.RCVTIMEO, timeout)
+
+        # Connect
+        self.socket.connect(f"tcp://localhost:{port}")
+
+        self.none_received_count = 0
 
     def receive_json(self):
         try:
