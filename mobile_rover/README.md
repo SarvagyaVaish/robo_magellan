@@ -36,3 +36,19 @@ python runner_XYZ.py
 ```
 python data_publisher.py -d logs/run_1 -r 100
 ```
+
+## Production
+
+Running the developed behaviors on a real physical robot.
+
+1. Load PROD config in Sensor Log app
+2. Select PROD config in config_manager.py
+3. Run the following processes
+
+```
+python sensor_server.py
+python pose_estimator.py
+python runner_magellan.py
+
+python data_logger.py
+```
