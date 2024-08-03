@@ -104,7 +104,8 @@ def get_publisher_pose():
 
 
 def get_subscriber_pose():
-    return Subscriber(port=PORT_POSE, timeout=1)
+    # GPS data should be published at at least 10Hz
+    return Subscriber(port=PORT_POSE, timeout=100)
 
 
 def get_publisher_cone_detections():
