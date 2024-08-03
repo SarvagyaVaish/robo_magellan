@@ -9,7 +9,8 @@ from pub_sub import get_publisher_pose
 
 def gps_to_pose(gps):
     easting, northing, _, _ = utm.from_latlon(gps["latitude"], gps["longitude"])
-    heading = gps["heading"]
+    gps_heading = gps["heading"]
+    heading = math.pi / 2 - gps_heading
     return {"x": easting, "y": northing, "th": heading}
 
 
