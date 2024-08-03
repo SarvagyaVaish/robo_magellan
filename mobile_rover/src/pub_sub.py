@@ -1,6 +1,7 @@
 import json
-import zmq
+import threading
 import time
+import zmq
 
 from custom_logger import get_logger
 
@@ -21,14 +22,14 @@ class Publisher:
     def send_json(self, message):
         self.socket.send_json(message)
 
-    def read_from_logs(self, filename):
+    def read_from_logs(self, filename, rate=10):
         time.sleep(1)
         with open(filename, "r") as f:
             for line in f:
                 gps_json = json.loads(line)
                 self.send_json(gps_json)
                 print(gps_json)
-                time.sleep(0.05)
+                time.sleep(1 / rate)
 
     def close(self):
         self.socket.close()
@@ -68,17 +69,20 @@ class Subscriber:
 
         return data
 
-    def write_to_logs(self, filename):
-        # Create an empty file
-        with open(filename, "w") as f:
-            f.write("")
+    def write_to_log(self, filename, stop_event: threading.Event):
+        logger.info(f"Writing data to {filename}")
 
-        # Continuously receive and write to file
-        while True:
-            gps_json = self.receive_json()
+        with open(filename, "a") as file:
+            while not stop_event.is_set():
+                # Wait for data
+                data = self.receive_json()
+                if data is None:
+                    continue
 
-            with open(filename, "a") as f:
-                f.write(json.dumps(gps_json) + "\n")
+                # Write data to file
+                json_string = json.dumps(data)
+                file.write(json_string + "\n")
+                file.flush()
 
 
 PORT_GPS = 5050

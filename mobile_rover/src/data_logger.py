@@ -7,18 +7,14 @@ import time
 from pub_sub import get_subscriber_gps, Subscriber
 
 
-def logger_thread(subscriber_name, subscriber: Subscriber, log_directory, stop_event):
+def logger_thread(
+    subscriber_name: str,
+    subscriber: Subscriber,
+    log_directory: str,
+    stop_event: threading.Event,
+):
     log_filename = os.path.join(log_directory, f"{subscriber_name}.data")
-    with open(log_filename, "a") as file:
-        print(f"Writing '{subscriber_name}' data to {log_filename}")
-
-        while not stop_event.is_set():
-            data = subscriber.receive_json()
-            if data is None:
-                continue
-            json_string = json.dumps(data)
-            file.write(json_string + "\n")
-            file.flush()
+    subscriber.write_to_log(log_filename, stop_event)
 
 
 def main():
@@ -30,7 +26,6 @@ def main():
     # List of subscribers to monitor
     subscribers = [
         ("gps", get_subscriber_gps()),
-        ("gps_duplicate", get_subscriber_gps()),
     ]
 
     subscriber_threads = []
