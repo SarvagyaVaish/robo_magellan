@@ -174,4 +174,5 @@ if __name__ == "__main__":
         reload=True,
         ssl_certfile=tls_crt_path,
         ssl_keyfile=tls_key_path,
+        log_level="warning",
     )

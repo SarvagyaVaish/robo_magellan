@@ -91,7 +91,8 @@ def get_publisher_gps():
 
 
 def get_subscriber_gps():
-    return Subscriber(port=PORT_GPS, timeout=1)
+    # GPS data should be published at at least 10Hz
+    return Subscriber(port=PORT_GPS, timeout=100)
 
 
 def get_publisher_pose():

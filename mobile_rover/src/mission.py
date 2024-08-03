@@ -93,5 +93,5 @@ class Mission:
 
 if __name__ == "__main__":
     mission = Mission()
-    mission.load_from_file()
+    mission.load_from_file(filename="mission.csv")
     mission.visualize_mission()

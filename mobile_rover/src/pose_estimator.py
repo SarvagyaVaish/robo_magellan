@@ -64,10 +64,7 @@ def main(write_logs, replay_logs, log_filename):
         current_pose = None
         prev_pose = None
 
-        rate = 5
-
         while True:
-            time.sleep(1 / rate)
             prev_pose = copy.deepcopy(current_pose)
 
             # Get current pose from GPS
