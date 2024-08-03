@@ -17,6 +17,7 @@ import math
 import os
 import signal
 import sys
+import time
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -62,11 +63,6 @@ app.add_middleware(
 )
 
 
-@app.get("/test_get")
-def read_root():
-    return {"Request type": "GET", "status": "OK"}
-
-
 def gps_from_sensor_frame(data_json):
     available_keys = set(data_json.keys())
     required_keys = {
@@ -100,8 +96,10 @@ async def sensor_data(request: Request):
     data_raw = await request.body()
     logger.debug(f"Raw data received on /server_data: {data_raw}")
 
+    timestamp_received = time.time()
     data_json = json.loads(data_raw.decode("utf-8"))
     data_gps = gps_from_sensor_frame(data_json)
+    data_gps["timestampReceivedData"] = timestamp_received
     if data_gps is not None:
         logger.info(f"Sending data: {data_gps}")
         gps_publisher.send_json(data_gps)
