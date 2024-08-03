@@ -1,4 +1,4 @@
-# Sets of commands
+# Useful commands
 
 ## Development
 
