@@ -8,6 +8,8 @@
 
 from enum import Enum, auto
 import math
+import random
+import time
 
 from cmd_vel import CmdVel
 from custom_logger import get_logger
@@ -23,6 +25,7 @@ class BehaviorType(Enum):
     NAV_TO_POSE = auto()
     TURN_IN_PLACE = auto()
     SEARCH_FOR_CONE = auto()
+    APPROACH_CONE = auto()
 
 
 class BehaviorResult(Enum):
@@ -132,16 +135,28 @@ class TurnInPlace:
 
 
 class SearchForCone:
+    # TODO: Check if the cone is visible for a few seconds before returning success
+
     def __init__(self):
         self.turn_in_place = TurnInPlace(rotation_th=2 * math.pi, speed_rpm=4)
         self.cone_detections_subscriber = get_subscriber_cone_detections()
 
     def step(self, current_pose: Pose) -> tuple[CmdVel, BehaviorResult]:
-        data = self.cone_detections_subscriber.receive_json()
+        detection = self.cone_detections_subscriber.receive_json()
+        """
+        detection = {
+            "x": 0.5295924186706543,
+            "y": 0.42527180910110474,
+            "width": 0.10086383819580078,
+            "height": 0.1837218999862671,
+            "score": 0.9829293489456177,
+            "class": 0,
+        }
+        """
 
         # If we found a cone, stop turning and return success
-        if data is not None:
-            logger.debug(f"Got cone detection: {data}")
+        if detection is not None:
+            logger.debug(f"Got cone detection: {detection}")
             return CmdVel(), BehaviorResult.SUCCESS
 
         # Otherwise, continue to turn in place
@@ -149,7 +164,72 @@ class SearchForCone:
 
         # If there is more turning to do, keep turning and return running
         if turn_result == BehaviorResult.RUNNING:
-            return cmd_vel, BehaviorResult.RUNNING
+            return cmd_vel, turn_result
 
         # If no longer turning, return failure
         return cmd_vel, BehaviorResult.ERROR
+
+
+class ApproachCone:
+    def __init__(self):
+        self.cone_detections_subscriber = get_subscriber_cone_detections()
+        self.no_detection_time = None
+        self.cone_lost_timeout = 30
+        self.cone_lost_jiggle_time = 5
+
+    def step(self, current_pose: Pose) -> tuple[CmdVel, BehaviorResult]:
+        detection = self.cone_detections_subscriber.receive_json()
+        """
+        detection = {
+            "x": 0.5295924186706543,
+            "y": 0.42527180910110474,
+            "width": 0.10086383819580078,
+            "height": 0.1837218999862671,
+            "score": 0.9829293489456177,
+            "class": 0,
+        }
+        """
+
+        if detection is None:
+            # First time we haven't seen a cone, set the no_detection_time
+            if self.no_detection_time is None:
+                self.no_detection_time = time.time()
+                return CmdVel(), BehaviorResult.RUNNING
+
+            # If we haven't seen a cone and have reached the timeout, return error
+            elif time.time() - self.no_detection_time > self.cone_lost_timeout:
+                logger.info("Cone lost. Returning error.")
+                return CmdVel(), BehaviorResult.ERROR
+
+            # Otherwise, jiggle in place to try to find the cone again
+            elif time.time() - self.no_detection_time > self.cone_lost_jiggle_time:
+                if random.random() < 0.5:
+                    logger.debug("Jiggling left to find cone")
+                    cmd_vel = CmdVel(angular_vel=0.1)
+                else:
+                    logger.debug("Jiggling right to find cone")
+                    cmd_vel = CmdVel(angular_vel=-0.1)
+                return cmd_vel, BehaviorResult.RUNNING
+
+            # Wait a bit to see if we can find the cone
+            else:
+                logger.debug("Cone not detected. Waiting...")
+                return CmdVel(), BehaviorResult.RUNNING
+
+        # The detection center is located at "x" horizontally, as a percentage of the image width.
+        # Calculate the error for visual servoing. Error = Center - X.
+        #   ---------------------
+        #   |                   |
+        #   | + + +   C   - - - |
+        #   |                   |
+        #   ---------------------
+        #   Positive error means cone is to the left.
+        #   Negative error means cone is to the right.
+        horizontal_error = 0.5 - detection["x"]
+
+        if horizontal_error > 0:
+            cmd_vel = CmdVel(angular_vel=0.1, linear_vel=0.1)
+        else:
+            cmd_vel = CmdVel(angular_vel=-0.1, linear_vel=0.1)
+
+        return cmd_vel, BehaviorResult.RUNNING

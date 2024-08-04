@@ -1,11 +1,12 @@
+from unittest.mock import Mock, patch
 import math
 import unittest
 
-from behaviors import TurnInPlace, BehaviorResult, NavToPose
+from behaviors import TurnInPlace, BehaviorResult, NavToPose, ApproachCone
 from utils.gps import Pose
 
 
-class TestBehaviors(unittest.TestCase):
+class TestNavToPose(unittest.TestCase):
 
     def test_nav_to_pose(self):
         starting_pose_list = [Pose(0, 0, 0), Pose(-1, 0, 0), Pose(-1, 0, 0)]
@@ -21,6 +22,9 @@ class TestBehaviors(unittest.TestCase):
 
             assert abs(cmd_vel.linear_vel - expected_linear_vel) < 0.01
             assert abs(cmd_vel.angular_vel - expected_angular_vel) < 0.01
+
+
+class TestTurnInPlace(unittest.TestCase):
 
     def test_turn_in_place(self):
         starting_th_list = [math.radians(0), math.radians(0), math.radians(360 - 45)]
@@ -46,6 +50,35 @@ class TestBehaviors(unittest.TestCase):
 
             assert abs(math.degrees(current_th) - math.degrees(expected_th)) < 0.01
             assert abs(behavior_duration - expected_duration) < 0.01
+
+
+class TestApproachCone(unittest.TestCase):
+
+    # ApproachCone calls 'get_subscriber_cone_detections'.
+    # Patch that method to return a Mock instead of a real subscriber.
+    @patch("behaviors.get_subscriber_cone_detections")
+    def setUp(self, mock__get_subscriber_cone_detections):
+        self.mock__cone_detections_subscriber = Mock()
+        mock__get_subscriber_cone_detections.return_value = self.mock__cone_detections_subscriber
+
+        # Create an instance of ApproachCone
+        self.approach_cone = ApproachCone()
+
+    def test_approach_cone(self):
+        # Have "receive_json" return a detection in the LEFT half of of the image
+        self.mock__cone_detections_subscriber.receive_json.return_value = {"x": 0.25}
+        cmd_vel, result = self.approach_cone.step(Pose(0, 0, 0))
+        assert cmd_vel.angular_vel > 0
+
+        # Have "receive_json" return a detection in the RIGHT half of of the image
+        self.mock__cone_detections_subscriber.receive_json.return_value = {"x": 0.75}
+        cmd_vel, result = self.approach_cone.step(Pose(0, 0, 0))
+        assert cmd_vel.angular_vel < 0
+
+        # Have "receive_json" NOT return a detection
+        self.mock__cone_detections_subscriber.receive_json.return_value = None
+        cmd_vel, result = self.approach_cone.step(Pose(0, 0, 0))
+        assert abs(cmd_vel.angular_vel) < 0.01
 
 
 if __name__ == "__main__":

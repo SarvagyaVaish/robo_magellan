@@ -16,7 +16,7 @@ def signal_handler(sig, frame):
     sys.exit(0)
 
 
-rate = 5
+rate = 10
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
