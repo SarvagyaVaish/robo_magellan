@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-
 import * as tf from "@tensorflow/tfjs";
-import "@tensorflow/tfjs-backend-webgl"; // set backend to webgl
-
+import "@tensorflow/tfjs-backend-webgl";
 import { detectVideo } from "./detect";
 import { Webcam } from "./webcam";
 
@@ -17,6 +15,10 @@ function ConeDetector() {
     net: null,
     inputShape: [1, 0, 0, 3],
   });
+
+  // server URL state
+  const defaultServerName = "survy-mac";
+  const [serverName, setServerName] = useState(defaultServerName);
 
   // webcam related variables
   const cameraRef = useRef(null);
@@ -53,12 +55,12 @@ function ConeDetector() {
     });
   }, [homeUrl]);
 
-  // // when model is loaded call start camera
-  // useEffect(() => {
-  //   if (model.net) {
-  //     webcam.openNormalCamera(cameraRef.current, setStreaming);
-  //   }
-  // }, [model]);
+  // when model is loaded call start camera
+  useEffect(() => {
+    if (model.net) {
+      webcam.openNormalCamera(cameraRef.current, setStreaming);
+    }
+  }, [model]);
 
   return (
     <div className="flex justify-center">
@@ -82,6 +84,21 @@ function ConeDetector() {
               Model: <strong>{modelName}</strong>
             </div>
           )}
+        </div>
+
+        {/* Server Url */}
+        <div className="flex justify-center m-2">
+          <div className="text-sm text-gray-800 w-full max-w-60">
+            <select
+              value={defaultServerName}
+              onChange={(e) => setServerName(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-md"
+            >
+              <option value={homeUrl}>Select server</option>
+              <option value="survy-mac">Server: survy-mac</option>
+              <option value="raspberrypi">Server: raspberrypi</option>
+            </select>
+          </div>
         </div>
 
         {/* Camera selection */}
@@ -131,7 +148,12 @@ function ConeDetector() {
             muted
             ref={cameraRef}
             onPlay={() =>
-              detectVideo(cameraRef.current, model, canvasRef.current)
+              detectVideo(
+                cameraRef.current,
+                model,
+                canvasRef.current,
+                serverName
+              )
             }
           />
 

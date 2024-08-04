@@ -46,7 +46,13 @@ const preprocess = (source, modelWidth, modelHeight) => {
  * @param {HTMLCanvasElement} canvasRef canvas reference
  * @param {VoidFunction} callback function to run after detection process
  */
-export const detect = async (source, model, canvasRef, callback = () => {}) => {
+export const detect = async (
+  source,
+  model,
+  canvasRef,
+  serverName,
+  callback = () => {}
+) => {
   const startTime = Date.now();
 
   const [modelWidth, modelHeight] = model.inputShape.slice(1, 3); // get model width and height
@@ -117,7 +123,7 @@ export const detect = async (source, model, canvasRef, callback = () => {}) => {
 
   // send detections to the server
   if (detectionList.length > 0) {
-    sendConeDetections(detectionList);
+    sendConeDetections(detectionList, serverName);
   }
 
   renderBoxes(canvasRef, boxes_data, scores_data, classes_data, [
@@ -148,7 +154,7 @@ export const detect = async (source, model, canvasRef, callback = () => {}) => {
  * @param {tf.GraphModel} model loaded YOLOv8 tensorflow.js model
  * @param {HTMLCanvasElement} canvasRef canvas reference
  */
-export const detectVideo = (vidSource, model, canvasRef) => {
+export const detectVideo = (vidSource, model, canvasRef, serverName) => {
   /**
    * Function to detect every frame from video
    */
@@ -160,7 +166,7 @@ export const detectVideo = (vidSource, model, canvasRef) => {
       return;
     }
 
-    detect(vidSource, model, canvasRef, () => {
+    detect(vidSource, model, canvasRef, serverName, () => {
       requestAnimationFrame(detectFrame); // get another frame
     });
   };

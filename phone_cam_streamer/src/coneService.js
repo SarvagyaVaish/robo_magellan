@@ -1,8 +1,8 @@
-const API_URL = "https://survy-mac.tail49268.ts.net:8000/cone_detections";
+export const sendConeDetections = async (detections, serverName) => {
+  const api_url = `https://${serverName}.tail49268.ts.net:8000/cone_detections`;
 
-export const sendConeDetections = async (detections) => {
   try {
-    const response = await fetch(API_URL, {
+    const response = await fetch(api_url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
