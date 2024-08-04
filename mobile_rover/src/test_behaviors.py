@@ -33,12 +33,12 @@ class TestBehaviors(unittest.TestCase):
         for starting_th, rotation_th, expected_th, expected_duration in zip(
             starting_th_list, rotation_th_list, expected_th_list, expected_duration_list
         ):
-            behavior = TurnInPlace(starting_th, rotation_th, 60)
+            behavior = TurnInPlace(rotation_th, speed_rpm=60)
             behavior_duration = 0
             current_th = starting_th
 
             while True:
-                cmd_vel, result = behavior.step(current_th)
+                cmd_vel, result = behavior.step(Pose(0, 0, current_th))
                 if result == BehaviorResult.SUCCESS:
                     break
                 behavior_duration += 1 / rate
