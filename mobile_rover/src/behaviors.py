@@ -86,6 +86,7 @@ class NavToPose:
 class TurnInPlace:
     # TODO: Support turning in both directions.
     # TODO: Support timeout
+    # TODO: Support turning >= 360 degrees. Right now we can only turn less than 360.
 
     def __init__(self, rotation_th, speed_rpm):
         self.rotation_th = rotation_th
@@ -113,6 +114,8 @@ class TurnInPlace:
             logger.debug("Current th is less than starting th. Adding 2pi to current th.")
             delta_th = 2 * math.pi + current_pose.th - self.starting_th
 
+        logger.debug(f"Delta th: {math.degrees(delta_th):.4f}")
+
         # Check if it seems like we have moved a whole lot, but are actually within the sensor noise.
         if not self.has_moved_enough and delta_th > math.radians(270):
             logger.debug("Unexpected large delta_th. Setting delta-th to 0.")
@@ -138,7 +141,7 @@ class SearchForCone:
     # TODO: Check if the cone is visible for a few seconds before returning success
 
     def __init__(self):
-        self.turn_in_place = TurnInPlace(rotation_th=2 * math.pi, speed_rpm=4)
+        self.turn_in_place = TurnInPlace(rotation_th=math.radians(350), speed_rpm=4)
         self.cone_detections_subscriber = get_subscriber_cone_detections()
 
     def step(self, current_pose: Pose) -> tuple[CmdVel, BehaviorResult]:

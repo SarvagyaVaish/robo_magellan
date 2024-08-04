@@ -46,7 +46,7 @@ class MobileRobotMagellan(MobileRobotBase):
             self.behavior = NoopBehavior()
 
         elif behavior_type == BehaviorType.SEARCH_FOR_CONE:
-            self.behavior = NoopBehavior()
+            self.behavior = SearchForCone()
 
         else:
             raise ValueError(f"Invalid behavior type: {behavior_type}")
@@ -65,6 +65,10 @@ class MobileRobotMagellan(MobileRobotBase):
         # convert linear and angular velocities to left and right wheel speeds
         left_speed = linear_vel - angular_vel * 0.5
         right_speed = linear_vel + angular_vel * 0.5
+
+        m = 5
+        left_speed = left_speed / m
+        right_speed = right_speed / m
 
         set_motor_speeds(left_speed, right_speed)
 

@@ -11,6 +11,7 @@ def gps_to_pose(gps):
     easting, northing, _, _ = utm.from_latlon(gps["latitude"], gps["longitude"])
     gps_heading = gps["heading"]
     heading = math.pi / 2 - gps_heading
+    heading = (heading + 2 * math.pi) % (2 * math.pi)
     return {"x": easting, "y": northing, "th": heading}
 
 
